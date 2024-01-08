@@ -3,6 +3,7 @@
     "name": "MapApp",
     "slug": "MapApp",
     "version": "1.0.0",
+    "scheme": "mapapp",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -22,32 +23,46 @@
     "updates": {
       "fallbackToCacheTimeout": 0
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.placesapp.MapApp",
       "infoPlist": {
         "NSAppTransportSecurity": {
           "NSAllowsArbitraryLoads": true,
           "NSAllowsLocalNetworking": true,
           "NSExceptionDomains": {
-            "192.168.1.4": {
+            "192.168.1.5": {
+              "NSExceptionAllowsInsecureHTTPLoads": true,
+              "NSRequiresCertificateTransparency": false
+            },
+            "10.167.6.133": {
               "NSExceptionAllowsInsecureHTTPLoads": true,
               "NSRequiresCertificateTransparency": false
             }
           }
-        }
+        },
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Allow Places to use your location",
+        "NSLocationAlwaysUsageDescription": "Allow Places to use your location",
+        "NSLocationWhenInUseUsageDescription": "Allow Places to use your location",
+        "UIBackgroundModes": ["location", "fetch"]
       }
     },
     "android": {
+      "package": "com.placesapp.MapApp",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"
-      }
+      },
+      "permissions": ["android.permission.RECORD_AUDIO"]
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "f141c1c5-587a-44e0-8267-346fd92a264b"
+      }
     }
   }
 }

@@ -24,7 +24,7 @@ const Onboarding = ({navigation}) => {
         }else{
             try{
                 // await AsyncStorage.setItem('@viewedOnboarding','true');
-                navigation.replace('DrawerNav');
+                navigation.replace('LoginScreen');
 
             }catch(err) {
                 console.log('Error @setItem',err);

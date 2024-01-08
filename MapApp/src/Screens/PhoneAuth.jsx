@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     otpText:{
         fontWeight:'bold',
         fontSize:20,
-        margin:20
+        margin:10
     },
     phoneInputStyle:{
         marginTop:20,

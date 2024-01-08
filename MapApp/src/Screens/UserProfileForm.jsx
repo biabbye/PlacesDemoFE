@@ -1,4 +1,5 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect, useContext, useState} from 'react';
+import {useSelector, useDispatch} from 'react-redux';
 import {
   View,
   ScrollView,
@@ -11,7 +12,6 @@ import {
 } from 'react-native';
 import { useRoute } from "@react-navigation/native"
 import {useTheme} from 'react-native-paper';
-import axios from 'axios';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import FontAwesome from 'react-native-vector-icons/FontAwesome';
 import Feather from 'react-native-vector-icons/Feather';
@@ -19,10 +19,22 @@ import AntDesign from 'react-native-vector-icons/AntDesign';
 import {Picker} from 'react-native-form-component';
 import Constants from 'expo-constants';
 import * as ImagePicker from 'expo-image-picker';
+import { AuthContext } from '../context/AuthContext';
+import axios from 'axios';
+import { config } from '../urlConfig';
+import { getStorage, ref, uploadBytes } from 'firebase/storage'; 
+import {app} from '../../firebaseConfig'
 
-const UserProfileForm = ({navigation}) => {
+//imports used for location tracking
+import * as Location from 'expo-location';
 
-    const [imageUrl, setImageUrl] = useState("");
+const UserProfileForm = ({navigation,route}) => {
+
+    const {signUp} = useContext(AuthContext);
+    const {userDataGoogle} = route.params;
+
+    const [imageUrl, setImageUrl] = useState("DefaultUserIcon.png");
+    const [uploading,setUploading] = useState(false);
     const [firstName,setFirstName] = useState("");
     const [lastName,setLastName] = useState("");
     const [username,setUsername] = useState("");
@@ -30,9 +42,11 @@ const UserProfileForm = ({navigation}) => {
     const [phoneNumber,setPhoneNumber] = useState("");
     const [city,setCity] = useState("");
 
+    const currentLocationId = route.params.currentLocationId;
+    console.log("ID LOCATIE CURENTA: ", currentLocationId);
+
   const {colors} = useTheme();
 
-  const route = useRoute()
 
   const [interest,setInterest] = useState("");
 
@@ -45,40 +59,67 @@ const UserProfileForm = ({navigation}) => {
     });
 
     console.log(result);
-
     if (!result.cancelled) {
       setImageUrl(result.uri);
+
+      setUploading(true);
+      const storage = getStorage(); //the storage itself
+      const reference = ref(storage, 'MyAvatar.jpg'); //how the image will be addressed inside the storage
+
+      //convert image to array of bytes
+      const img = await fetch(result.uri);
+      const bytes = await img.blob();
+
+      await uploadBytes(reference, bytes); //upload images
+
+      setUploading(false);
     }
   };
 
   
+  
+  var userData = {
+    imageUrl:imageUrl,
+    firstName:firstName,
+    lastName:lastName,
+    username:username,
+    phoneNumber:phoneNumber,
+    email:email,
+    city:city,
+    interest:interest
+  };
 
   const submitUserProfile = async () => {
+
+    let axiosConfig = {
+      headers: {
+          'Content-Type': 'application/json;charset=UTF-8',
+          "Access-Control-Allow-Origin": "*",
+      }
+    };
+
+    var userData = {
+      imageUrl:imageUrl,
+      firstName:firstName,
+      lastName:lastName, 
+      username:username,
+      phoneNumber:phoneNumber,
+      email:email,
+      city:city,
+      interest:interest
+    };
+
+    console.log(userData);
     try {
-      const response = await axios.post('http://192.168.1.8:7071/api/UserProfiles',{
-       imageUrl,firstName,lastName,username,phoneNumber,email,city,interest
-      });
+      const response = await axios.post(`${config.BASE_URL}/api/UserProfile?locationId=${currentLocationId}`,
+      userData,axiosConfig
+      );
       console.log(response.data);
       navigation.replace('DrawerNav');
     }catch(err) {
       console.log(err);
-    }
-
-   
+    }   
   };
-
-  // const displayPayload = () => {
-  //   console.log("AICI!!!!!!");
-  //   console.log(image)
-  //   console.log(firstName);
-  //   console.log(lastName);
-  //   console.log(username);
-  //   console.log(phoneNumber);
-  //   console.log(email);
-  //   console.log(city);
-  //   console.log(interestValue);
-
-  // }
 
   return (
     <ScrollView contentContainerStyle={{flex: 1,paddingTop:100,padding:30}}
@@ -95,7 +136,7 @@ const UserProfileForm = ({navigation}) => {
               }}>
               <ImageBackground
                 source={{
-                  uri: imageUrl,
+                  uri: userDataGoogle!= null ? userDataGoogle.picture : imageUrl,
                 }}
                 style={{height: 100, width: 100}}
                 imageStyle={{borderRadius: 15}}>
@@ -131,7 +172,7 @@ const UserProfileForm = ({navigation}) => {
             placeholder="First Name"
             placeholderTextColor="#666666"
             autoCorrect={false}
-            value={firstName}
+            value={userDataGoogle!= null ? userDataGoogle.given_name : firstName}
             onChangeText={setFirstName}
             style={[
               styles.textInput,
@@ -148,7 +189,7 @@ const UserProfileForm = ({navigation}) => {
             placeholder="Last Name"
             placeholderTextColor="#666666"
             autoCorrect={false}
-            value={lastName}
+            value={userDataGoogle!= null ? userDataGoogle.family_name : lastName}
             onChangeText={setLastName}
             style={[
               styles.textInput,
@@ -165,7 +206,7 @@ const UserProfileForm = ({navigation}) => {
             placeholder="Username"
             placeholderTextColor="#666666"
             autoCorrect={false}
-            value={username}
+            value={userDataGoogle!= null ? userDataGoogle.name : username}
             onChangeText={setUsername}
             style={[
               styles.textInput,
@@ -201,7 +242,7 @@ const UserProfileForm = ({navigation}) => {
             placeholderTextColor="#666666"
             keyboardType="email-address"
             autoCorrect={false}
-            value={email}
+            value={userDataGoogle!= null ? userDataGoogle.email : email}
             onChangeText={setEmail}
             style={[
               styles.textInput,
@@ -242,7 +283,7 @@ const UserProfileForm = ({navigation}) => {
         />
  
         
-        <TouchableOpacity style={styles.commandButton} onPress={submitUserProfile}>
+        <TouchableOpacity style={styles.commandButton} onPress={() => {signUp(currentLocationId,userData)}}>
           <Text style={styles.panelButtonTitle}>Submit</Text>
         </TouchableOpacity>
     </ScrollView>

@@ -5,6 +5,6 @@
   "minify": false,
   "urlRandomness": "82-mh3",
   "https": false,
-  "scheme": null,
+  "scheme": "com.placesapp.mapApp",
   "devClient": false
 }
